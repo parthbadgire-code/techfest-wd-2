@@ -91,14 +91,12 @@ function App() {
             </div>
           </nav>
 
-          <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<Home />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/databanks" element={<Databanks />} />
-              <Route path="/register" element={<Register />} />
-            </Routes>
-          </AnimatePresence>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/databanks" element={<Databanks />} />
+            <Route path="/register" element={<Register />} />
+          </Routes>
         </div>
       </div>
     </div>

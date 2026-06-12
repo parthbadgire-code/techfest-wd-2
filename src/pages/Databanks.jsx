@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { motion } from 'framer-motion';
 
 export default function Databanks() {
   const containerRef = useRef(null);
@@ -19,13 +18,7 @@ export default function Databanks() {
   }, []);
 
   return (
-    <motion.div 
-      ref={containerRef} style={{ paddingTop: '10vh' }}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.05 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div ref={containerRef} style={{ paddingTop: '10vh' }}>
       <h1 className="section-title" style={{ textAlign: 'left', marginTop: 0 }}>GLOBAL <span className="accent">DATABANKS</span></h1>
       <p style={{ color: '#888', marginBottom: '3rem' }}>Accessing verified sponsor modules and corporate partners for Techfest 2026.</p>
       
@@ -40,6 +33,6 @@ export default function Databanks() {
       </div>
       
       <div style={{ height: '20vh' }}></div>
-    </motion.div>
+    </div>
   );
 }

@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { motion } from 'framer-motion';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -28,13 +27,7 @@ export default function Home() {
   }, []);
 
   return (
-    <motion.div 
-      ref={containerRef}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div ref={containerRef}>
       <section className="hero-section">
         <h1 className="hero-title">ENTER THE<br/><span className="accent">SIMULATION</span></h1>
         <p className="hero-desc">
@@ -67,6 +60,6 @@ export default function Home() {
       </div>
 
       <div style={{ height: '20vh' }}></div>
-    </motion.div>
+    </div>
   );
 }

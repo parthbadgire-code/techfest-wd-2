@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { motion } from 'framer-motion';
 
 export default function Register() {
   const containerRef = useRef(null);
@@ -18,13 +17,7 @@ export default function Register() {
   }, []);
 
   return (
-    <motion.div 
-      ref={containerRef} style={{ paddingTop: '10vh', display: 'flex', justifyContent: 'center' }}
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -50 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div ref={containerRef} style={{ paddingTop: '10vh', display: 'flex', justifyContent: 'center' }}>
       <div className="info-card reg-form" style={{ width: '100%', maxWidth: '600px', borderTop: '4px solid var(--secondary)' }}>
         <h1 style={{ fontFamily: 'var(--font-display)', marginBottom: '1rem', color: 'var(--secondary)', fontSize: '2rem' }}>SECURE ACCESS</h1>
         <p style={{ color: '#888', marginBottom: '2rem' }}>Enter credentials to register for the Techfest network.</p>
@@ -49,6 +42,6 @@ export default function Register() {
           <button type="submit" className="btn" style={{ width: '100%' }}>INITIATE UPLOAD</button>
         </form>
       </div>
-    </motion.div>
+    </div>
   );
 }
