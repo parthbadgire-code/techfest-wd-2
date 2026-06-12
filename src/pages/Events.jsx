@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
+import { motion } from 'framer-motion';
 
 export default function Events() {
   const containerRef = useRef(null);
@@ -18,7 +19,13 @@ export default function Events() {
   }, []);
 
   return (
-    <div ref={containerRef} style={{ paddingTop: '10vh' }}>
+    <motion.div 
+      ref={containerRef} style={{ paddingTop: '10vh' }}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.5 }}
+    >
       <h1 className="section-title" style={{ textAlign: 'left', marginTop: 0 }}>ACTIVE <span className="accent">EVENTS</span></h1>
       
       <div className="event-list" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -51,6 +58,6 @@ export default function Events() {
       </div>
       
       <div style={{ height: '20vh' }}></div>
-    </div>
+    </motion.div>
   );
 }

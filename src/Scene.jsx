@@ -1,6 +1,6 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Float, Stars, Text, MeshDistortMaterial, Sparkles, Ring } from '@react-three/drei';
+import { Float, Stars, Text, MeshDistortMaterial, Sparkles, Ring, TorusKnot, Icosahedron } from '@react-three/drei';
 import * as THREE from 'three';
 
 function ParticleField({ count = 2000 }) {
@@ -48,6 +48,32 @@ function ParticleField({ count = 2000 }) {
       <sphereGeometry args={[0.04, 4, 4]} />
       <meshBasicMaterial color="#00f0ff" transparent opacity={0.6} />
     </instancedMesh>
+  );
+}
+
+function FloatingAsteroids() {
+  const group = useRef();
+  
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    group.current.rotation.y = t * 0.05;
+    group.current.rotation.x = Math.sin(t * 0.05) * 0.2;
+  });
+
+  return (
+    <group ref={group}>
+      <Float speed={1.5} rotationIntensity={2} floatIntensity={3}>
+        <Icosahedron args={[0.5, 0]} position={[-8, 4, -5]}>
+          <meshStandardMaterial color="#00f0ff" wireframe />
+        </Icosahedron>
+        <TorusKnot args={[0.6, 0.1, 64, 8]} position={[8, -3, -2]}>
+          <MeshDistortMaterial color="#ff003c" distort={0.2} speed={3} roughness={0.2} metalness={0.8} />
+        </TorusKnot>
+        <Icosahedron args={[0.8, 1]} position={[6, 5, -8]}>
+          <meshStandardMaterial color="#ffffff" wireframe opacity={0.2} transparent />
+        </Icosahedron>
+      </Float>
+    </group>
   );
 }
 
@@ -104,7 +130,7 @@ function TechCore() {
   });
 
   return (
-    <group ref={groupRef} position={[2, 0, 0]}> {/* Shifted slightly right to balance HUD */}
+    <group ref={groupRef} position={[2, 0, 0]}>
       <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
         <mesh ref={coreRef} scale={1.5}>
           <icosahedronGeometry args={[1, 4]} />
@@ -152,6 +178,7 @@ export default function Scene() {
       <spotLight position={[0, 5, 10]} angle={0.3} penumbra={1} intensity={5} color="#ffffff" castShadow />
       
       <TechCore />
+      <FloatingAsteroids />
       <ParticleField count={2500} />
       <Stars radius={100} depth={50} count={7000} factor={4} saturation={0} fade speed={1} />
       <Sparkles count={300} scale={15} size={6} speed={0.4} opacity={1} color="#00f0ff" />

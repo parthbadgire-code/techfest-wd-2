@@ -3,6 +3,7 @@ import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { Preload } from '@react-three/drei';
 import { EffectComposer, Bloom, Noise, Vignette } from '@react-three/postprocessing';
+import { AnimatePresence } from 'framer-motion';
 import Scene from './Scene';
 
 import Home from './pages/Home';
@@ -90,12 +91,14 @@ function App() {
             </div>
           </nav>
 
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/databanks" element={<Databanks />} />
-            <Route path="/register" element={<Register />} />
-          </Routes>
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<Home />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/databanks" element={<Databanks />} />
+              <Route path="/register" element={<Register />} />
+            </Routes>
+          </AnimatePresence>
         </div>
       </div>
     </div>
