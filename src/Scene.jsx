@@ -1,120 +1,143 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Float, Stars, Text, MeshDistortMaterial, Sparkles } from '@react-three/drei';
+import { Float, Stars, Text, MeshDistortMaterial, Sparkles, Ring } from '@react-three/drei';
 import * as THREE from 'three';
 
-// 3D Particles that react to scroll
-function ParticleField({ count = 1000 }) {
+function ParticleField({ count = 2000 }) {
   const mesh = useRef();
   const dummy = useMemo(() => new THREE.Object3D(), []);
-
+  
   const particles = useMemo(() => {
     const temp = [];
     for (let i = 0; i < count; i++) {
-      const x = (Math.random() - 0.5) * 50;
-      const y = (Math.random() - 0.5) * 50;
-      const z = (Math.random() - 0.5) * 50;
-      const factor = Math.random() * 2 + 1;
-      const speed = Math.random() * 0.01 + 0.005;
-      temp.push({ x, y, z, factor, speed });
+      const theta = Math.random() * 2 * Math.PI;
+      const phi = Math.acos(Math.random() * 2 - 1);
+      const r = 20 + Math.random() * 30; // Spread out
+      
+      const x = r * Math.sin(phi) * Math.cos(theta);
+      const y = r * Math.sin(phi) * Math.sin(theta);
+      const z = r * Math.cos(phi);
+      
+      const speed = Math.random() * 0.02 + 0.005;
+      temp.push({ x, y, z, speed, theta, phi, r });
     }
     return temp;
   }, [count]);
 
   useFrame((state) => {
-    particles.forEach((particle, i) => {
-      let { x, y, z, factor, speed } = particle;
-
-      // Make particles float up slowly and rotate around center
-      const t = state.clock.elapsedTime;
+    const t = state.clock.elapsedTime;
+    particles.forEach((p, i) => {
+      // Swirling galaxy effect
+      const currentTheta = p.theta + t * p.speed;
+      const x = p.r * Math.sin(p.phi) * Math.cos(currentTheta);
+      const z = p.r * Math.sin(p.phi) * Math.sin(currentTheta);
       
-      dummy.position.set(
-        x + Math.cos(t * speed) * factor,
-        y + Math.sin(t * speed) * factor + (state.mouse.y * 5),
-        z + (state.mouse.x * 5)
-      );
-      
-      // Rotate individually
-      dummy.rotation.set(
-        (t * speed) / 2,
-        (t * speed) / 2,
-        (t * speed) / 2
-      );
-      
+      dummy.position.set(x, p.y + Math.sin(t + i)*2, z);
       dummy.updateMatrix();
       mesh.current.setMatrixAt(i, dummy.matrix);
     });
     mesh.current.instanceMatrix.needsUpdate = true;
     
-    // Global rotation based on scroll/mouse
-    mesh.current.rotation.y = THREE.MathUtils.lerp(mesh.current.rotation.y, state.mouse.x * 0.5, 0.05);
-    mesh.current.rotation.x = THREE.MathUtils.lerp(mesh.current.rotation.x, -state.mouse.y * 0.5, 0.05);
+    // Global mouse tracking
+    mesh.current.rotation.y = THREE.MathUtils.lerp(mesh.current.rotation.y, state.mouse.x * 0.2, 0.05);
+    mesh.current.rotation.x = THREE.MathUtils.lerp(mesh.current.rotation.x, -state.mouse.y * 0.2, 0.05);
   });
 
   return (
     <instancedMesh ref={mesh} args={[null, null, count]}>
-      <dodecahedronGeometry args={[0.05, 0]} />
+      <sphereGeometry args={[0.04, 4, 4]} />
       <meshBasicMaterial color="#00f0ff" transparent opacity={0.6} />
     </instancedMesh>
   );
 }
 
-// Main Interactive Object
+function OrbitalRings() {
+  const groupRef = useRef();
+  
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    groupRef.current.rotation.x = Math.sin(t * 0.2) * 0.5 + 1;
+    groupRef.current.rotation.y = t * 0.1;
+    groupRef.current.rotation.z = Math.cos(t * 0.1) * 0.2;
+  });
+
+  return (
+    <group ref={groupRef}>
+      <Ring args={[3.5, 3.52, 64]} rotation={[Math.PI/2, 0, 0]}>
+        <meshBasicMaterial color="#00f0ff" side={THREE.DoubleSide} transparent opacity={0.5} />
+      </Ring>
+      <Ring args={[4.5, 4.51, 64]} rotation={[Math.PI/2, 0, Math.PI/4]}>
+        <meshBasicMaterial color="#ff003c" side={THREE.DoubleSide} transparent opacity={0.3} />
+      </Ring>
+      <Ring args={[5.5, 5.55, 64]} rotation={[Math.PI/3, 0, 0]}>
+        <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} transparent opacity={0.1} />
+      </Ring>
+      
+      {/* Small orbiting satellites */}
+      <mesh position={[3.5, 0, 0]}>
+        <sphereGeometry args={[0.1, 16, 16]} />
+        <meshBasicMaterial color="#00f0ff" />
+      </mesh>
+      <mesh position={[-4.5, 0, 0]}>
+        <octahedronGeometry args={[0.15]} />
+        <meshBasicMaterial color="#ff003c" />
+      </mesh>
+    </group>
+  );
+}
+
 function TechCore() {
   const coreRef = useRef();
   const wireframeRef = useRef();
+  const groupRef = useRef();
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    // Complex rotation
     coreRef.current.rotation.y = time * 0.2;
     coreRef.current.rotation.x = Math.sin(time * 0.5) * 0.2;
     
     wireframeRef.current.rotation.y = -time * 0.15;
     wireframeRef.current.rotation.z = time * 0.1;
     
-    // Hover effect using mouse position
-    coreRef.current.position.y = THREE.MathUtils.lerp(coreRef.current.position.y, state.mouse.y * 1, 0.1);
-    coreRef.current.position.x = THREE.MathUtils.lerp(coreRef.current.position.x, state.mouse.x * 1, 0.1);
-    
-    wireframeRef.current.position.copy(coreRef.current.position);
+    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, state.mouse.y * 1.5, 0.05);
+    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, state.mouse.x * 1.5, 0.05);
   });
 
   return (
-    <group>
-      <Float speed={2} rotationIntensity={1} floatIntensity={2}>
-        {/* Inner Core */}
+    <group ref={groupRef} position={[2, 0, 0]}> {/* Shifted slightly right to balance HUD */}
+      <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
         <mesh ref={coreRef} scale={1.5}>
           <icosahedronGeometry args={[1, 4]} />
           <MeshDistortMaterial 
-            color="#00f0ff" 
-            envMapIntensity={1} 
+            color="#000000" 
+            emissive="#00f0ff"
+            emissiveIntensity={0.2}
             clearcoat={1} 
             clearcoatRoughness={0.1} 
-            metalness={0.8} 
-            roughness={0.2}
+            metalness={1} 
+            roughness={0.1}
             distort={0.4}
             speed={2}
           />
         </mesh>
         
-        {/* Outer Wireframe */}
         <mesh ref={wireframeRef} scale={1.8}>
           <icosahedronGeometry args={[1, 1]} />
-          <meshStandardMaterial color="#fff" wireframe opacity={0.3} transparent />
+          <meshStandardMaterial color="#00f0ff" wireframe opacity={0.3} transparent />
         </mesh>
+        
+        <OrbitalRings />
       </Float>
       
-      {/* Dynamic Text in 3D */}
       <Text 
-        position={[0, 0, -5]} 
-        fontSize={10} 
+        position={[-5, 0, -10]} 
+        fontSize={12} 
         color="#ffffff" 
-        fillOpacity={0.05} 
+        fillOpacity={0.02} 
         letterSpacing={0.2}
-        font="https://fonts.gstatic.com/s/spacegrotesk/v15/V8mQoQDjQSkGpu8pnHXFAA_vS2A.woff"
+        font="https://fonts.gstatic.com/s/syncopate/v19/pe0sMIuPIYBCpEV5eFdCBfe_.woff"
       >
-        TECHFEST
+        NEXUS
       </Text>
     </group>
   );
@@ -123,17 +146,17 @@ function TechCore() {
 export default function Scene() {
   return (
     <>
-      <ambientLight intensity={0.5} />
+      <ambientLight intensity={0.2} />
       <directionalLight position={[10, 10, 10]} intensity={2} color="#00f0ff" />
-      <directionalLight position={[-10, -10, -10]} intensity={1} color="#ff00f0" />
-      <spotLight position={[0, 5, 10]} angle={0.3} penumbra={1} intensity={2} color="#ffffff" castShadow />
+      <directionalLight position={[-10, -10, -10]} intensity={1} color="#ff003c" />
+      <spotLight position={[0, 5, 10]} angle={0.3} penumbra={1} intensity={5} color="#ffffff" castShadow />
       
       <TechCore />
-      <ParticleField count={1500} />
-      <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-      <Sparkles count={200} scale={10} size={4} speed={0.4} opacity={0.5} color="#00f0ff" />
+      <ParticleField count={2500} />
+      <Stars radius={100} depth={50} count={7000} factor={4} saturation={0} fade speed={1} />
+      <Sparkles count={300} scale={15} size={6} speed={0.4} opacity={1} color="#00f0ff" />
       
-      <fog attach="fog" args={['#050505', 5, 30]} />
+      <fog attach="fog" args={['#030303', 5, 40]} />
     </>
   );
 }
