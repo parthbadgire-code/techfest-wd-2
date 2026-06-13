@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Float, Stars, Text, MeshDistortMaterial, Sparkles, Ring, TorusKnot, Icosahedron } from '@react-three/drei';
 import * as THREE from 'three';
@@ -26,13 +26,15 @@ function ParticleField({ count = 2000 }) {
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
+    const scrollY = window.scrollY || 0;
+    
     particles.forEach((p, i) => {
-      // Swirling galaxy effect
-      const currentTheta = p.theta + t * p.speed;
+      // Swirling galaxy effect with scroll impact
+      const currentTheta = p.theta + t * p.speed + (scrollY * 0.001);
       const x = p.r * Math.sin(p.phi) * Math.cos(currentTheta);
       const z = p.r * Math.sin(p.phi) * Math.sin(currentTheta);
       
-      dummy.position.set(x, p.y + Math.sin(t + i)*2, z);
+      dummy.position.set(x, p.y + Math.sin(t + i)*2 + (scrollY * 0.01), z);
       dummy.updateMatrix();
       mesh.current.setMatrixAt(i, dummy.matrix);
     });
@@ -51,27 +53,67 @@ function ParticleField({ count = 2000 }) {
   );
 }
 
+function InteractiveMesh({ children, position, scale = 1 }) {
+  const meshRef = useRef();
+  const [hovered, setHovered] = useState(false);
+  const [clicked, setClicked] = useState(false);
+  
+  useFrame((state, delta) => {
+    const targetScale = hovered ? scale * 1.5 : scale;
+    meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+    
+    if (clicked) {
+      meshRef.current.rotation.x += 10 * delta;
+      meshRef.current.rotation.y += 10 * delta;
+      if (meshRef.current.rotation.x > Math.PI * 4) setClicked(false);
+    }
+  });
+
+  return (
+    <group 
+      ref={meshRef} 
+      position={position}
+      onPointerOver={() => { setHovered(true); document.body.style.cursor = 'pointer'; }}
+      onPointerOut={() => { setHovered(false); document.body.style.cursor = 'auto'; }}
+      onClick={(e) => { e.stopPropagation(); setClicked(true); }}
+    >
+      {children}
+    </group>
+  );
+}
+
 function FloatingAsteroids() {
   const group = useRef();
   
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    group.current.rotation.y = t * 0.05;
+    const scrollY = window.scrollY || 0;
+    
+    group.current.rotation.y = t * 0.05 + (scrollY * 0.002);
     group.current.rotation.x = Math.sin(t * 0.05) * 0.2;
+    group.current.position.y = scrollY * 0.005; // Float up slightly on scroll
   });
 
   return (
     <group ref={group}>
       <Float speed={1.5} rotationIntensity={2} floatIntensity={3}>
-        <Icosahedron args={[0.5, 0]} position={[-8, 4, -5]}>
-          <meshStandardMaterial color="#00f0ff" wireframe />
-        </Icosahedron>
-        <TorusKnot args={[0.6, 0.1, 64, 8]} position={[8, -3, -2]}>
-          <MeshDistortMaterial color="#ff003c" distort={0.2} speed={3} roughness={0.2} metalness={0.8} />
-        </TorusKnot>
-        <Icosahedron args={[0.8, 1]} position={[6, 5, -8]}>
-          <meshStandardMaterial color="#ffffff" wireframe opacity={0.2} transparent />
-        </Icosahedron>
+        <InteractiveMesh position={[-8, 4, -5]}>
+          <Icosahedron args={[0.5, 0]}>
+            <meshStandardMaterial color="#00f0ff" wireframe />
+          </Icosahedron>
+        </InteractiveMesh>
+        
+        <InteractiveMesh position={[8, -3, -2]}>
+          <TorusKnot args={[0.6, 0.1, 64, 8]}>
+            <MeshDistortMaterial color="#ff003c" distort={0.2} speed={3} roughness={0.2} metalness={0.8} />
+          </TorusKnot>
+        </InteractiveMesh>
+        
+        <InteractiveMesh position={[6, 5, -8]}>
+          <Icosahedron args={[0.8, 1]}>
+            <meshStandardMaterial color="#ffffff" wireframe opacity={0.5} transparent />
+          </Icosahedron>
+        </InteractiveMesh>
       </Float>
     </group>
   );
@@ -82,8 +124,10 @@ function OrbitalRings() {
   
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    groupRef.current.rotation.x = Math.sin(t * 0.2) * 0.5 + 1;
-    groupRef.current.rotation.y = t * 0.1;
+    const scrollY = window.scrollY || 0;
+    
+    groupRef.current.rotation.x = Math.sin(t * 0.2) * 0.5 + 1 + (scrollY * 0.001);
+    groupRef.current.rotation.y = t * 0.1 + (scrollY * 0.002);
     groupRef.current.rotation.z = Math.cos(t * 0.1) * 0.2;
   });
 
@@ -99,7 +143,6 @@ function OrbitalRings() {
         <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} transparent opacity={0.1} />
       </Ring>
       
-      {/* Small orbiting satellites */}
       <mesh position={[3.5, 0, 0]}>
         <sphereGeometry args={[0.1, 16, 16]} />
         <meshBasicMaterial color="#00f0ff" />
@@ -119,11 +162,20 @@ function TechCore() {
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    coreRef.current.rotation.y = time * 0.2;
-    coreRef.current.rotation.x = Math.sin(time * 0.5) * 0.2;
+    const scrollY = window.scrollY || 0;
     
-    wireframeRef.current.rotation.y = -time * 0.15;
-    wireframeRef.current.rotation.z = time * 0.1;
+    // 3D SCROLL ANIMATION
+    // As user scrolls, the core rotates aggressively and zooms slightly towards camera
+    const scrollRotation = scrollY * 0.005;
+    const scrollScale = 1 + (scrollY * 0.001);
+    
+    coreRef.current.rotation.y = time * 0.2 + scrollRotation;
+    coreRef.current.rotation.x = Math.sin(time * 0.5) * 0.2 + scrollRotation * 0.5;
+    
+    wireframeRef.current.rotation.y = -time * 0.15 - scrollRotation;
+    wireframeRef.current.rotation.z = time * 0.1 + scrollRotation;
+    
+    groupRef.current.scale.lerp(new THREE.Vector3(scrollScale, scrollScale, scrollScale), 0.1);
     
     groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, state.mouse.y * 1.5, 0.05);
     groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, state.mouse.x * 1.5, 0.05);
