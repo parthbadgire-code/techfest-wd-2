@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { Preload } from '@react-three/drei';
 import { EffectComposer, Bloom, Noise, Vignette } from '@react-three/postprocessing';
-import { AnimatePresence } from 'framer-motion';
 import Scene from './Scene';
 
 import Home from './pages/Home';
@@ -35,13 +34,15 @@ function App() {
       {/* 3D Background - Persistent across routes */}
       <div className="canvas-container">
         <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 2]}>
-          <Scene />
-          <EffectComposer>
-            <Bloom luminanceThreshold={0.2} luminanceSmoothing={0.9} height={300} intensity={1.5} />
-            <Noise opacity={0.025} />
-            <Vignette eskil={false} offset={0.1} darkness={1.1} />
-          </EffectComposer>
-          <Preload all />
+          <React.Suspense fallback={null}>
+            <Scene />
+            <EffectComposer>
+              <Bloom luminanceThreshold={0.2} luminanceSmoothing={0.9} height={300} intensity={1.5} />
+              <Noise opacity={0.025} />
+              <Vignette eskil={false} offset={0.1} darkness={1.1} />
+            </EffectComposer>
+            <Preload all />
+          </React.Suspense>
         </Canvas>
       </div>
 
