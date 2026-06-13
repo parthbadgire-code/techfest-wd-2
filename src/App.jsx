@@ -13,15 +13,42 @@ import { ErrorBoundary } from './ErrorBoundary';
 
 function App() {
   const [time, setTime] = useState(new Date().toLocaleTimeString());
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isHovering, setIsHovering] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date().toLocaleTimeString()), 1000);
-    return () => clearInterval(timer);
+    
+    const handleMouseMove = (e) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+      
+      // Check if hovering over interactive elements
+      const target = e.target;
+      if (target.tagName.toLowerCase() === 'a' || 
+          target.tagName.toLowerCase() === 'button' || 
+          target.closest('.info-card') ||
+          target.closest('.btn') ||
+          window.getComputedStyle(target).cursor === 'pointer') {
+        setIsHovering(true);
+      } else {
+        setIsHovering(false);
+      }
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   return (
     <div>
+      {/* Custom Cursor */}
+      <div className="cyber-cursor-dot" style={{ transform: `translate(calc(${mousePos.x}px - 50%), calc(${mousePos.y}px - 50%))` }}></div>
+      <div className={`cyber-cursor ${isHovering ? 'hovering' : ''}`} style={{ transform: `translate(calc(${mousePos.x}px - 50%), calc(${mousePos.y}px - 50%))` }}></div>
+      
       {/* HUD Border System */}
       <div className="hud-border">
         <div className="hud-corner hud-tl"></div>

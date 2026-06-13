@@ -86,6 +86,62 @@ function OrbitalRings() {
   );
 }
 
+function InteractiveMesh({ position, geometry, color }) {
+  const meshRef = useRef();
+  const [hovered, setHovered] = useState(false);
+  const [clicked, setClicked] = useState(false);
+  
+  useFrame((state, delta) => {
+    const targetScale = hovered ? 1.5 : 1;
+    meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+    
+    if (clicked) {
+      meshRef.current.rotation.x += 10 * delta;
+      meshRef.current.rotation.y += 10 * delta;
+      if (meshRef.current.rotation.x > Math.PI * 4) setClicked(false);
+    } else {
+      meshRef.current.rotation.x += delta * 0.5;
+      meshRef.current.rotation.y += delta * 0.5;
+    }
+  });
+
+  return (
+    <mesh 
+      ref={meshRef} 
+      position={position}
+      geometry={geometry}
+      onPointerOver={() => { setHovered(true); document.body.style.cursor = 'crosshair'; }}
+      onPointerOut={() => { setHovered(false); document.body.style.cursor = 'auto'; }}
+      onClick={(e) => { e.stopPropagation(); setClicked(true); }}
+    >
+      <meshStandardMaterial color={hovered ? "#ffffff" : color} wireframe={!hovered} emissive={hovered ? color : "#000000"} emissiveIntensity={0.5} />
+    </mesh>
+  );
+}
+
+function FloatingObjects() {
+  const group = useRef();
+  const geo1 = useMemo(() => new THREE.OctahedronGeometry(0.5, 0), []);
+  const geo2 = useMemo(() => new THREE.TorusGeometry(0.4, 0.1, 16, 32), []);
+  const geo3 = useMemo(() => new THREE.BoxGeometry(0.6, 0.6, 0.6), []);
+  
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    const scrollY = window.scrollY || 0;
+    group.current.rotation.y = t * 0.05 + (scrollY * 0.002);
+    group.current.position.y = Math.sin(t) * 0.5 + scrollY * 0.005;
+  });
+
+  return (
+    <group ref={group}>
+      <InteractiveMesh position={[-6, 3, -2]} geometry={geo1} color="#00f0ff" />
+      <InteractiveMesh position={[6, -2, -3]} geometry={geo2} color="#ff003c" />
+      <InteractiveMesh position={[-4, -4, -4]} geometry={geo3} color="#ffffff" />
+      <InteractiveMesh position={[5, 4, -5]} geometry={geo1} color="#00f0ff" />
+    </group>
+  );
+}
+
 function TechCore() {
   const coreRef = useRef();
   const wireframeRef = useRef();
@@ -135,6 +191,7 @@ export default function Scene() {
       <directionalLight position={[-10, -10, -10]} intensity={2} color="#ff003c" />
       
       <TechCore />
+      <FloatingObjects />
       <ParticleField count={2500} />
     </>
   );
