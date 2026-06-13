@@ -1,6 +1,5 @@
-import { useRef, useMemo, useState, useEffect } from 'react';
+import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Float, Stars, Text, MeshDistortMaterial, Sparkles, Ring, TorusKnot, Icosahedron } from '@react-three/drei';
 import * as THREE from 'three';
 
 function ParticleField({ count = 2000 }) {
@@ -29,7 +28,6 @@ function ParticleField({ count = 2000 }) {
     const scrollY = window.scrollY || 0;
     
     particles.forEach((p, i) => {
-      // Swirling galaxy effect with scroll impact
       const currentTheta = p.theta + t * p.speed + (scrollY * 0.001);
       const x = p.r * Math.sin(p.phi) * Math.cos(currentTheta);
       const z = p.r * Math.sin(p.phi) * Math.sin(currentTheta);
@@ -40,7 +38,6 @@ function ParticleField({ count = 2000 }) {
     });
     mesh.current.instanceMatrix.needsUpdate = true;
     
-    // Global mouse tracking
     mesh.current.rotation.y = THREE.MathUtils.lerp(mesh.current.rotation.y, state.mouse.x * 0.2, 0.05);
     mesh.current.rotation.x = THREE.MathUtils.lerp(mesh.current.rotation.x, -state.mouse.y * 0.2, 0.05);
   });
@@ -50,72 +47,6 @@ function ParticleField({ count = 2000 }) {
       <sphereGeometry args={[0.04, 4, 4]} />
       <meshBasicMaterial color="#00f0ff" transparent opacity={0.6} />
     </instancedMesh>
-  );
-}
-
-function InteractiveMesh({ children, position, scale = 1 }) {
-  const meshRef = useRef();
-  const [hovered, setHovered] = useState(false);
-  const [clicked, setClicked] = useState(false);
-  
-  useFrame((state, delta) => {
-    const targetScale = hovered ? scale * 1.5 : scale;
-    meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
-    
-    if (clicked) {
-      meshRef.current.rotation.x += 10 * delta;
-      meshRef.current.rotation.y += 10 * delta;
-      if (meshRef.current.rotation.x > Math.PI * 4) setClicked(false);
-    }
-  });
-
-  return (
-    <group 
-      ref={meshRef} 
-      position={position}
-      onPointerOver={() => { setHovered(true); document.body.style.cursor = 'pointer'; }}
-      onPointerOut={() => { setHovered(false); document.body.style.cursor = 'auto'; }}
-      onClick={(e) => { e.stopPropagation(); setClicked(true); }}
-    >
-      {children}
-    </group>
-  );
-}
-
-function FloatingAsteroids() {
-  const group = useRef();
-  
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const scrollY = window.scrollY || 0;
-    
-    group.current.rotation.y = t * 0.05 + (scrollY * 0.002);
-    group.current.rotation.x = Math.sin(t * 0.05) * 0.2;
-    group.current.position.y = scrollY * 0.005; // Float up slightly on scroll
-  });
-
-  return (
-    <group ref={group}>
-      <Float speed={1.5} rotationIntensity={2} floatIntensity={3}>
-        <InteractiveMesh position={[-8, 4, -5]}>
-          <Icosahedron args={[0.5, 0]}>
-            <meshStandardMaterial color="#00f0ff" wireframe />
-          </Icosahedron>
-        </InteractiveMesh>
-        
-        <InteractiveMesh position={[8, -3, -2]}>
-          <TorusKnot args={[0.6, 0.1, 64, 8]}>
-            <MeshDistortMaterial color="#ff003c" distort={0.2} speed={3} roughness={0.2} metalness={0.8} />
-          </TorusKnot>
-        </InteractiveMesh>
-        
-        <InteractiveMesh position={[6, 5, -8]}>
-          <Icosahedron args={[0.8, 1]}>
-            <meshStandardMaterial color="#ffffff" wireframe opacity={0.5} transparent />
-          </Icosahedron>
-        </InteractiveMesh>
-      </Float>
-    </group>
   );
 }
 
@@ -133,22 +64,22 @@ function OrbitalRings() {
 
   return (
     <group ref={groupRef}>
-      <Ring args={[3.5, 3.52, 64]} rotation={[Math.PI/2, 0, 0]}>
+      <mesh rotation={[Math.PI/2, 0, 0]}>
+        <ringGeometry args={[3.5, 3.52, 64]} />
         <meshBasicMaterial color="#00f0ff" side={THREE.DoubleSide} transparent opacity={0.5} />
-      </Ring>
-      <Ring args={[4.5, 4.51, 64]} rotation={[Math.PI/2, 0, Math.PI/4]}>
+      </mesh>
+      <mesh rotation={[Math.PI/2, 0, Math.PI/4]}>
+        <ringGeometry args={[4.5, 4.51, 64]} />
         <meshBasicMaterial color="#ff003c" side={THREE.DoubleSide} transparent opacity={0.3} />
-      </Ring>
-      <Ring args={[5.5, 5.55, 64]} rotation={[Math.PI/3, 0, 0]}>
-        <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} transparent opacity={0.1} />
-      </Ring>
+      </mesh>
       
+      {/* Small orbiting satellites */}
       <mesh position={[3.5, 0, 0]}>
-        <sphereGeometry args={[0.1, 16, 16]} />
+        <sphereGeometry args={[0.2, 16, 16]} />
         <meshBasicMaterial color="#00f0ff" />
       </mesh>
       <mesh position={[-4.5, 0, 0]}>
-        <octahedronGeometry args={[0.15]} />
+        <octahedronGeometry args={[0.25]} />
         <meshBasicMaterial color="#ff003c" />
       </mesh>
     </group>
@@ -164,8 +95,6 @@ function TechCore() {
     const time = state.clock.getElapsedTime();
     const scrollY = window.scrollY || 0;
     
-    // 3D SCROLL ANIMATION
-    // As user scrolls, the core rotates aggressively and zooms slightly towards camera
     const scrollRotation = scrollY * 0.005;
     const scrollScale = 1 + (scrollY * 0.001);
     
@@ -177,46 +106,23 @@ function TechCore() {
     
     groupRef.current.scale.lerp(new THREE.Vector3(scrollScale, scrollScale, scrollScale), 0.1);
     
-    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, state.mouse.y * 1.5, 0.05);
+    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, state.mouse.y * 1.5 + Math.sin(time)*0.5, 0.05);
     groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, state.mouse.x * 1.5, 0.05);
   });
 
   return (
     <group ref={groupRef} position={[2, 0, 0]}>
-      <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
-        <mesh ref={coreRef} scale={1.5}>
-          <icosahedronGeometry args={[1, 4]} />
-          <MeshDistortMaterial 
-            color="#000000" 
-            emissive="#00f0ff"
-            emissiveIntensity={0.2}
-            clearcoat={1} 
-            clearcoatRoughness={0.1} 
-            metalness={1} 
-            roughness={0.1}
-            distort={0.4}
-            speed={2}
-          />
-        </mesh>
-        
-        <mesh ref={wireframeRef} scale={1.8}>
-          <icosahedronGeometry args={[1, 1]} />
-          <meshStandardMaterial color="#00f0ff" wireframe opacity={0.3} transparent />
-        </mesh>
-        
-        <OrbitalRings />
-      </Float>
+      <mesh ref={coreRef} scale={1.5}>
+        <icosahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color="#0a0a0a" emissive="#00f0ff" emissiveIntensity={0.5} roughness={0.1} metalness={0.8} />
+      </mesh>
       
-      <Text 
-        position={[-5, 0, -10]} 
-        fontSize={12} 
-        color="#ffffff" 
-        fillOpacity={0.02} 
-        letterSpacing={0.2}
-        font="https://fonts.gstatic.com/s/syncopate/v19/pe0sMIuPIYBCpEV5eFdCBfe_.woff"
-      >
-        NEXUS
-      </Text>
+      <mesh ref={wireframeRef} scale={1.8}>
+        <icosahedronGeometry args={[1, 1]} />
+        <meshStandardMaterial color="#00f0ff" wireframe transparent opacity={0.5} />
+      </mesh>
+      
+      <OrbitalRings />
     </group>
   );
 }
@@ -224,18 +130,12 @@ function TechCore() {
 export default function Scene() {
   return (
     <>
-      <ambientLight intensity={0.2} />
+      <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 10]} intensity={2} color="#00f0ff" />
-      <directionalLight position={[-10, -10, -10]} intensity={1} color="#ff003c" />
-      <spotLight position={[0, 5, 10]} angle={0.3} penumbra={1} intensity={5} color="#ffffff" castShadow />
+      <directionalLight position={[-10, -10, -10]} intensity={2} color="#ff003c" />
       
       <TechCore />
-      <FloatingAsteroids />
       <ParticleField count={2500} />
-      <Stars radius={100} depth={50} count={7000} factor={4} saturation={0} fade speed={1} />
-      <Sparkles count={300} scale={15} size={6} speed={0.4} opacity={1} color="#00f0ff" />
-      
-      <fog attach="fog" args={['#030303', 5, 40]} />
     </>
   );
 }

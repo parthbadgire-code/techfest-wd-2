@@ -9,6 +9,8 @@ import Events from './pages/Events';
 import Databanks from './pages/Databanks';
 import Register from './pages/Register';
 
+import { ErrorBoundary } from './ErrorBoundary';
+
 function App() {
   const [time, setTime] = useState(new Date().toLocaleTimeString());
   const location = useLocation();
@@ -31,14 +33,16 @@ function App() {
       <div className="scanlines"></div>
 
       {/* 3D Background - Persistent across routes */}
-      <div className="canvas-container">
-        <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 2]}>
-          <React.Suspense fallback={null}>
-            <Scene />
-            <Preload all />
-          </React.Suspense>
-        </Canvas>
-      </div>
+      <ErrorBoundary>
+        <div className="canvas-container">
+          <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 2]}>
+            <React.Suspense fallback={null}>
+              <Scene />
+              <Preload all />
+            </React.Suspense>
+          </Canvas>
+        </div>
+      </ErrorBoundary>
 
       {/* UI Overlay */}
       <div className="ui-container">
